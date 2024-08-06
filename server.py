@@ -1,37 +1,39 @@
 from flask import Flask, request, jsonify
+import os
 
 app = Flask(__name__)
 
-# Exemplo de usuários registrados
-usuarios_registrados = {
-    "usuario1": "senha1",
-    "usuario2": "senha2"
-}
+@app.route('/')
+def home():
+    return "Servidor Flask está rodando!"
 
 @app.route('/api/register_hwid', methods=['POST'])
 def register_hwid():
     data = request.json
-    cpu_serial = data.get('cpu_serial')
-    motherboard_serial = data.get('motherboard_serial')
-    disk_serial = data.get('disk_serial')
     username = data.get('username')
     password = data.get('password')
+    
+    # Verificar usuário e senha
+    if not valid_credentials(username, password):
+        return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
 
-    if username not in usuarios_registrados or usuarios_registrados[username] != password:
-        return jsonify({'message': 'Credenciais inválidas!'}), 401
+    cpu_id = data.get('cpu_id')
+    motherboard_id = data.get('motherboard_id')
+    hd_id = data.get('hd_id')
 
-    # Salvar os dados em um arquivo
-    with open('hwid_records.txt', 'a') as file:
-        file.write(f"Username: {username}\n")
-        file.write(f"CPU Serial: {cpu_serial}\n")
-        file.write(f"Motherboard Serial: {motherboard_serial}\n")
-        file.write(f"Disk Serial: {disk_serial}\n")
-        file.write("\n")
+    # Aqui você processa os dados do HWID (salvar em um banco de dados, por exemplo)
+    # Esta parte do código depende da sua implementação específica
+    # Por exemplo:
+    # save_hwid_to_database(username, cpu_id, motherboard_id, hd_id)
+    
+    return jsonify({'status': 'success', 'message': 'HWID registrado com sucesso!'})
 
-    # Enviar comando para liberar o acesso (implementar conforme necessidade)
-    # Aqui, você poderia adicionar a lógica para notificar o aplicativo sobre a liberação do HWID.
+def valid_credentials(username, password):
+    # Função de verificação de credenciais (substitua pela lógica real)
+    # Aqui você deve validar as credenciais do usuário, possivelmente verificando um banco de dados
+    # Exemplo simples:
+    return username == 'usuario' and password == 'senha'
 
-    return jsonify({'message': 'HWID registrado com sucesso!'}), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)

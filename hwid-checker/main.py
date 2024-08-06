@@ -1,31 +1,45 @@
+import os
 import subprocess
 import requests
 
-# Obtém o HWID da CPU
-cpu_serial = subprocess.check_output("wmic cpu get processorid", shell=True).decode().split("\n")[1].strip()
+def get_hwid():
+    # Obtém o HWID da CPU
+    cpu_id = subprocess.check_output("wmic cpu get processorid").decode().split("\n")[1].strip()
 
-# Obtém o HWID da placa-mãe
-motherboard_serial = subprocess.check_output("wmic baseboard get serialnumber", shell=True).decode().split("\n")[1].strip()
+    # Obtém o HWID da placa-mãe
+    motherboard_id = subprocess.check_output("wmic baseboard get serialnumber").decode().split("\n")[1].strip()
 
-# Obtém o HWID do HD principal (C:)
-disk_serial = subprocess.check_output("wmic diskdrive where \"DeviceID='\\\\.\\PHYSICALDRIVE0'\" get serialnumber", shell=True).decode().split("\n")[1].strip()
+    # Obtém o HWID do HD principal (C:)
+    hd_id = subprocess.check_output("wmic diskdrive where \"DeviceID='\\\\.\\PHYSICALDRIVE0'\" get serialnumber").decode().split("\n")[1].strip()
 
-# Solicita login e senha ao usuário
-username = input("Digite seu login: ")
+    return cpu_id, motherboard_id, hd_id
+
+cpu_id, motherboard_id, hd_id = get_hwid()
+
+print(f"CPU Serial: {cpu_id}")
+print(f"Motherboard Serial: {motherboard_id}")
+print(f"Disk Serial: {hd_id}")
+
+# Solicitar login e senha do usuário
+username = input("Digite seu nome de usuário: ")
 password = input("Digite sua senha: ")
 
-# Dados a serem enviados para o servidor
 hwid_data = {
-    'cpu_serial': cpu_serial,
-    'motherboard_serial': motherboard_serial,
-    'disk_serial': disk_serial,
+    'cpu_id': cpu_id,
+    'motherboard_id': motherboard_id,
+    'hd_id': hd_id,
     'username': username,
     'password': password
 }
 
-# URL do servidor Flask (atualize com a URL do seu servidor)
-url = 'https://seu-app-hwid-checker.herokuapp.com/api/register_hwid'
+# URL do servidor Flask no Heroku
+url = "https://seu-app.herokuapp.com/api/register_hwid"
 
 # Envia os dados para o servidor
 response = requests.post(url, json=hwid_data)
-print(response.json())
+
+# Verifica a resposta do servidor
+if response.status_code == 200:
+    print("HWID registrado com sucesso!")
+else:
+    print(f"Erro ao registrar HWID: {response.json()['message']}")
