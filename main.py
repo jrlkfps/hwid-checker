@@ -30,7 +30,7 @@ hwid_data = {
 }
 
 # URL do servidor Flask no Heroku
-url = "https://hwid-checker-f8d4951224a8.herokuapp.com/api/register_hwid"
+url = "https://hwid-checker.onrender.com"
 
 # Enviando solicitação POST para registrar HWID
 response = requests.post(url, json=hwid_data)
