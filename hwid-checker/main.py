@@ -1,34 +1,31 @@
-import os
+import subprocess
 import requests
 
-# Executa o script .bat para obter os HWIDs
-os.system('get_hwid.bat')
+# Obtém o HWID da CPU
+cpu_serial = subprocess.check_output("wmic cpu get processorid", shell=True).decode().split("\n")[1].strip()
 
-# Lê o conteúdo do arquivo hwid.txt
-hwid_data = {}
-with open('hwid.txt', 'r') as file:
-    for line in file:
-        if "CPU ID:" in line:
-            hwid_data['cpu_serial'] = line.split(":")[1].strip()
-        elif "Motherboard ID:" in line:
-            hwid_data['motherboard_serial'] = line.split(":")[1].strip()
-        elif "Hard Drive ID:" in line:
-            hwid_data['disk_serial'] = line.split(":")[1].strip()
+# Obtém o HWID da placa-mãe
+motherboard_serial = subprocess.check_output("wmic baseboard get serialnumber", shell=True).decode().split("\n")[1].strip()
 
-# Exibe os seriais coletados
-print(f"CPU Serial: {hwid_data['cpu_serial']}")
-print(f"Motherboard Serial: {hwid_data['motherboard_serial']}")
-print(f"Disk Serial: {hwid_data['disk_serial']}")
+# Obtém o HWID do HD principal (C:)
+disk_serial = subprocess.check_output("wmic diskdrive where \"DeviceID='\\\\.\\PHYSICALDRIVE0'\" get serialnumber", shell=True).decode().split("\n")[1].strip()
 
-# URL do servidor
-url = "http://localhost:5000/api/register_hwid"
+# Solicita login e senha ao usuário
+username = input("Digite seu login: ")
+password = input("Digite sua senha: ")
+
+# Dados a serem enviados para o servidor
+hwid_data = {
+    'cpu_serial': cpu_serial,
+    'motherboard_serial': motherboard_serial,
+    'disk_serial': disk_serial,
+    'username': username,
+    'password': password
+}
+
+# URL do servidor Flask (atualize com a URL do seu servidor)
+url = 'https://seu-app-hwid-checker.herokuapp.com/api/register_hwid'
 
 # Envia os dados para o servidor
-try:
-    response = requests.post(url, json=hwid_data)
-    if response.status_code == 200:
-        print("HWID registrado com sucesso!")
-    else:
-        print(f"Falha ao registrar HWID: {response.status_code}")
-except requests.exceptions.RequestException as e:
-    print(f"Erro ao conectar ao servidor: {e}")
+response = requests.post(url, json=hwid_data)
+print(response.json())
