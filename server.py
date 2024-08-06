@@ -3,37 +3,38 @@ import os
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "Servidor Flask está rodando!"
+# Dados de usuários e HWIDs para simulação
+usuarios = {
+    "usuario1": "senha1",
+    "usuario2": "senha2",
+}
+
+hwids_permitidos = []
 
 @app.route('/api/register_hwid', methods=['POST'])
 def register_hwid():
     data = request.json
-    username = data.get('username')
-    password = data.get('password')
+    username = data.get("username")
+    password = data.get("password")
+    cpu_serial = data.get("cpu_serial")
+    motherboard_serial = data.get("motherboard_serial")
+    disk_serial = data.get("disk_serial")
+
+    if username not in usuarios or usuarios[username] != password:
+        return jsonify({"error": "Usuário ou senha inválidos"}), 401
+
+    hwid = f"{cpu_serial}-{motherboard_serial}-{disk_serial}"
     
-    # Verificar usuário e senha
-    if not valid_credentials(username, password):
-        return jsonify({'status': 'error', 'message': 'Invalid credentials'}), 401
+    if hwid not in hwids_permitidos:
+        hwids_permitidos.append(hwid)
+        return jsonify({"status": "HWID registrado com sucesso", "hwid": hwid}), 200
+    else:
+        return jsonify({"status": "HWID já registrado", "hwid": hwid}), 200
 
-    cpu_id = data.get('cpu_id')
-    motherboard_id = data.get('motherboard_id')
-    hd_id = data.get('hd_id')
+@app.route('/')
+def index():
+    return "Servidor Flask está funcionando."
 
-    # Aqui você processa os dados do HWID (salvar em um banco de dados, por exemplo)
-    # Esta parte do código depende da sua implementação específica
-    # Por exemplo:
-    # save_hwid_to_database(username, cpu_id, motherboard_id, hd_id)
-    
-    return jsonify({'status': 'success', 'message': 'HWID registrado com sucesso!'})
-
-def valid_credentials(username, password):
-    # Função de verificação de credenciais (substitua pela lógica real)
-    # Aqui você deve validar as credenciais do usuário, possivelmente verificando um banco de dados
-    # Exemplo simples:
-    return username == 'usuario' and password == 'senha'
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
